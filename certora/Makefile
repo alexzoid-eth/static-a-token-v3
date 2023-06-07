@@ -10,8 +10,8 @@ help:
 
 .SILENT: bug
 bug:
-	#git diff origin/certora -- $(CONTRACTS_DIR) > tests/participants/bug$$(ls -1 tests/participants | grep -Eo '^bug[0-9]+' | sort -n | tail -1 | tr -cd '[:digit:]' | awk 'END{print $$0 + 1}').patch
-	git diff origin/certora -- $(CONTRACTS_DIR) > tests/participants/bug12.patch
+	# git diff origin/certora -- $(CONTRACTS_DIR) > tests/participants/bug$$(ls -1 tests/participants | grep -Eo '^bug[0-9]+' | sort -n | tail -1 | tr -cd '[:digit:]' | awk 'END{print $$0 + 1}').patch
+	git diff origin/certora -- $(CONTRACTS_DIR) > tests/participants/bug$$(find tests/participants -type f -name "bug*.patch" | sort -t 'g' -k 2n | tail -n 1 | tr -dc '0-9' | awk '{$$1=$$1+1; print}').patch
 
 restore:
 	git restore $(CONTRACTS_DIR)/*

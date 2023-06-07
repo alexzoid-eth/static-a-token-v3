@@ -36,6 +36,11 @@ import "StaticATokenLM_base.spec"
         || f.selector == maxDepositUnderlying(address).selector
         );
     
+    definition metaFunctions(method f) returns bool = (
+        f.selector == metaDeposit(address, address, uint256, uint16, bool, uint256, (address, address, uint256, uint256, uint8, bytes32, bytes32), (uint8, bytes32, bytes32)).selector 
+        || f.selector == metaDeposit(address, address, uint256, uint256, bool, uint256, (uint8, bytes32, bytes32)).selector 
+        );
+
     /// @notice `metaDeposit()` is excluded because of the off-chain cryptography
     definition mintFunctions(method f) returns bool = (
         f.selector == deposit(uint256, address, uint16, bool).selector 
@@ -204,7 +209,8 @@ import "StaticATokenLM_base.spec"
     * @notice Prove "participants/bug2.patch"
     * Valid state: total supply is the summary of tokens of all users
     **/
-    invariant balanceSolvency() totalSupply() == sumAllBalance() filtered { f -> !f.isView } {
+    invariant balanceSolvency() totalSupply() == sumAllBalance() 
+        filtered { f -> !f.isView && !harnessOnlyMethods(f) && !metaFunctions(f) } {
         preserved with(env e) {
             require e.msg.sender != currentContract;
         }
@@ -215,7 +221,7 @@ import "StaticATokenLM_base.spec"
     * State transition: each possible operation changes the balance of at most two users
     **/
     rule balanceOfChangeMaxTwoUsers(env e, method f, address user1, address user2, address user3) 
-        filtered { f -> !f.isView } {
+        filtered { f -> !f.isView && !harnessOnlyMethods(f) && !metaFunctions(f) } {
 
         setupUser(e, user1);
         setupUser(e, user2);
@@ -325,7 +331,7 @@ import "StaticATokenLM_base.spec"
     * @notice Prove "participants/bug7.patch"
     * State transition: mint increases recipient balance
     **/
-    rule mintIncreasesRecipientBalance(env e, address caller, uint256 shares, address recipient) {
+    rule mintIncreasesRecipientBalance(env e, address caller, address recipient) {
         setupUser(e, caller);
         setupUser(e, recipient);
         require e.msg.sender == caller;
@@ -335,11 +341,13 @@ import "StaticATokenLM_base.spec"
 
         uint256 recipientBalanceBefore = balanceOf(recipient);
 
+        uint256 shares;
         mint(e, shares, recipient);
 
         uint256 recipientBalanceAfter = balanceOf(recipient);
 
         // Increases recipient balance
+        assert recipientBalanceAfter > recipientBalanceBefore;
         assert recipientBalanceAfter - recipientBalanceBefore == shares;
     }
 
@@ -443,3 +451,48 @@ import "StaticATokenLM_base.spec"
         assert anyUserUnderlyingBalanceBefore == anyUserUnderlyingBalanceAfter;
     }
 
+    /**
+    * @notice Prove "participants/bug12.patch"
+    * State transition: `withdraw()` or `redeem()` should burn user shares or revert
+    **/
+    rule withdrawRedeemBurnUserShares(method f, env e, address anyUser) 
+        filtered { f -> burnFunctions(f) } {
+        
+        setupUser(e, anyUser);
+
+        setupEnv(e);
+
+        uint256 anyUserBalanceBefore = balanceOf(anyUser);
+
+        calldataarg arg;
+        f(e, arg);
+        
+        uint256 anyUserBalanceAfter = balanceOf(anyUser);
+
+        assert anyUserBalanceBefore != anyUserBalanceAfter;
+    }
+
+    /**
+    * @notice Prove "participants/bug13.patch"
+    * State transition: `withdraw()` or `redeem()` should burn only one user shares 
+    **/
+    rule burnOnlyOneUserShares(method f, env e, address anyUser1, address anyUser2) 
+        filtered { f -> burnFunctions(f) } {
+        
+        setupUser(e, anyUser1);
+        setupUser(e, anyUser2);
+
+        setupEnv(e);
+
+        uint256 anyUser1BalanceBefore = balanceOf(anyUser1);
+        uint256 anyUser2BalanceBefore = balanceOf(anyUser2);
+
+        calldataarg arg;
+        f(e, arg);
+        
+        uint256 anyUser1BalanceAfter = balanceOf(anyUser1);
+        uint256 anyUser2BalanceAfter = balanceOf(anyUser2);
+
+        // The successful transaction should change the balance of a user
+        assert anyUser1BalanceBefore != anyUser1BalanceAfter && anyUser2BalanceBefore == anyUser2BalanceAfter;
+    }

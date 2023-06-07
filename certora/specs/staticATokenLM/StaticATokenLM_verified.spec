@@ -14,8 +14,8 @@ import "StaticATokenLM_base.spec"
         mint(uint256, address) returns (uint256)
         deposit(uint256, address, uint16, bool) returns (uint256)
         deposit(uint256, address) returns (uint256)
-        withdraw(uint256, address, address) returns (uint256) => DISPATCHER(true)
-        redeem(uint256, address, address) returns (uint256) => DISPATCHER(true)
+        withdraw(uint256, address, address) returns (uint256)
+        redeem(uint256, address, address) returns (uint256)
 
         convertToShares(uint256) returns (uint256)
         convertToAssets(uint256) returns (uint256)
@@ -331,6 +331,30 @@ import "StaticATokenLM_base.spec"
     }
 
     /**
+    * @notice Prove "participants/bug7.patch"
+    * State transition: mint increases recipient balance
+    **/
+    rule mintIncreasesRecipientBalance(env e, address caller, address recipient) {
+        setupUser(e, caller);
+        setupUser(e, recipient);
+        require e.msg.sender == caller;
+        require caller != recipient;
+
+        setupEnv(e);
+
+        uint256 recipientBalanceBefore = balanceOf(recipient);
+
+        uint256 shares;
+        mint(e, shares, recipient);
+
+        uint256 recipientBalanceAfter = balanceOf(recipient);
+
+        // Increases recipient balance
+        assert recipientBalanceAfter > recipientBalanceBefore 
+            => recipientBalanceAfter - recipientBalanceBefore == shares;
+    }
+
+    /**
     * @notice Prove "participants/bug8.patch"
     * Hight level: mint doesn't touch other balances
     **/
@@ -428,4 +452,72 @@ import "StaticATokenLM_base.spec"
         uint256 anyUserUnderlyingBalanceAfter = _AToken.balanceOf(e, anyUser);
 
         assert anyUserUnderlyingBalanceBefore == anyUserUnderlyingBalanceAfter;
+    }
+
+    /**
+    * @notice Prove "participants/bug12.patch"
+    * State transition: `withdraw()` or `redeem()` should burn owner's shares or revert
+    **/
+    rule withdrawRedeemBurnOwnerShares(method f, env e) 
+        filtered { f -> burnFunctions(f) } {
+        
+        address owner;
+        setupUser(e, owner);
+        require owner == e.msg.sender;
+
+        address receiver;
+        setupUser(e, receiver);
+        require owner != receiver;
+
+        setupEnv(e);
+
+        uint256 ownerBalanceBefore = balanceOf(owner);
+
+        address amount;
+        uint256 result;
+        if(f.selector == withdraw(uint256, address, address).selector) {
+            result = withdraw(e, amount, receiver, owner);
+        } else { // f.selector == redeem(uint256, address, address).selector
+            result = redeem(e, amount, receiver, owner);
+        }
+
+        uint256 ownerBalanceAfter = balanceOf(owner);
+
+        assert result != 0 => ownerBalanceBefore != ownerBalanceAfter;
+    }
+
+    /**
+    * @notice Prove "participants/bug13.patch"
+    * State transition: `withdraw()` or `redeem()` should burn only one user's shares 
+    **/
+    rule burnOnlyOneUserShares(method f, env e) 
+        filtered { f -> burnFunctions(f) } {
+        
+        address owner;
+        setupUser(e, owner);
+        require owner == e.msg.sender;
+
+        address receiver;
+        setupUser(e, receiver);
+        require owner != receiver;
+
+        address anyUser;
+        setupUser(e, anyUser);
+        require anyUser != owner;
+
+        setupEnv(e);
+
+        uint256 anyUserBefore = balanceOf(anyUser);
+
+        address amount;
+        uint256 result;
+        if(f.selector == withdraw(uint256, address, address).selector) {
+            result = withdraw(e, amount, receiver, owner);
+        } else { // f.selector == redeem(uint256, address, address).selector
+            result = redeem(e, amount, receiver, owner);
+        }
+
+        uint256 anyUserAfter = balanceOf(anyUser);
+
+        assert anyUserBefore == anyUserAfter;
     }

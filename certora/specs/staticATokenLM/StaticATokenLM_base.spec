@@ -12,7 +12,7 @@ import "../methods/methods_base.spec"
     }
 
 ////////////////// FUNCTIONS //////////////////////
-
+    
     /// @title Reward hook
     /// @notice allows a single reward
     //todo: allow 2 or 3 rewards
@@ -21,16 +21,16 @@ import "../methods/methods_base.spec"
     } 
 
     /// @title Sum of balances of StaticAToken 
-    ghost sumAllBalance() returns mathint {
+    ghost sumAllBalance() returns uint256 {
         init_state axiom sumAllBalance() == 0;
     }
 
     hook Sstore balanceOf[KEY address a] uint256 balance (uint256 old_balance) STORAGE {
-    havoc sumAllBalance assuming sumAllBalance@new() == sumAllBalance@old() + balance - old_balance;
+        havoc sumAllBalance assuming sumAllBalance@new() == sumAllBalance@old() + balance - old_balance;
     }
 
 ///////////////// Properties ///////////////////////
-        
+    
     /// @title The amount of rewards that was actually received by claimRewards() cannot exceed the initial amount of rewards
     rule getClaimableRewardsBefore_leq_claimed_claimRewardsOnBehalf()
     {
@@ -64,3 +64,4 @@ import "../methods/methods_base.spec"
                     require reward != _TransferStrategy;
                 }
             }
+    

@@ -1,6 +1,7 @@
 # build and cache
 cache/
 out/
+lib/
 
 # general
 .env
@@ -14,3 +15,6 @@ package-lock.json
 node_modules
 
 broadcast
+
+.certora_internal
+.certora_recent_jobs.json

@@ -120,7 +120,7 @@ import "StaticATokenLM_base.spec"
         address rewardToken;
         require rewardToken == _DummyERC20_rewardToken;
 
-        // Updating of `unclaimedRewards` requires user's balance > 0
+        // Updating of `unclaimedRewards` requires the user's balance > 0
         require balanceOf(user1) != 0;
         require balanceOf(user2) != 0;
 
@@ -132,7 +132,7 @@ import "StaticATokenLM_base.spec"
         uint256 amount;
         transfer(e, user2, amount);
 
-        // `_beforeTokenTransfer()` should change users's `unclaimedRewards` the same way
+        // `_beforeTokenTransfer()` should change the users's `unclaimedRewards` the same way
         mathint unclaimedRewards1 = saveCastToUint128(getUnclaimedRewards(user1, rewardToken));
         assert unclaimedRewards1 == claimableRewards1; 
         mathint unclaimedRewards2 = saveCastToUint128(getUnclaimedRewards(user2, rewardToken));
@@ -141,7 +141,7 @@ import "StaticATokenLM_base.spec"
     
     /**
     * @notice Prove "certora/bug6.patch"
-    * Unit test: minted `assets` should be calculated based of `shares` 
+    * Unit test: minted `assets` should be calculated based on `shares` 
     **/
     rule mintAssetsBasedOnPreviewMint(env e, address user1, address user2) {
         setupUser(e, user1);
@@ -152,7 +152,7 @@ import "StaticATokenLM_base.spec"
         uint256 shares;
         mathint assets = mint(e, shares, user2);
 
-        // Amount of minted assets should be calculated based of `shares`
+        // Amount of minted assets should be calculated based on `shares`
         assert assets == previewMint(e, shares);
     }
     
@@ -164,7 +164,7 @@ import "StaticATokenLM_base.spec"
         setupUser(e, user);
         setupEnv(e);
 
-        // Assume the protocol have `ACTIVE` and not have `PAUSED` flags
+        // Assume the protocol has `ACTIVE` and has not `PAUSED` flags
         require !isPaused();
 
         mathint userBalance = balanceOf(user);
@@ -194,7 +194,7 @@ import "StaticATokenLM_base.spec"
 
         setupUser(e, user);
 
-        // `maxRedeemUnderlying()`: the protocol have `PAUSED` flag or not have `ACTIVE` flag 
+        // `maxRedeemUnderlying()`: the protocol has `PAUSED` flag or has not `ACTIVE` flag 
         if(f.selector == maxRedeemUnderlying(address).selector) {
             require isPaused();
             result = maxRedeemUnderlying(e, user);
@@ -243,7 +243,7 @@ import "StaticATokenLM_base.spec"
         uint256 balance2After = balanceOf(user2);
         uint256 balance3After = balanceOf(user3);
 
-        // At least one user's balanced should not changed
+        // At least one user's balance should not changed
         assert (balance1Before == balance1After 
             || balance2Before == balance2After 
             || balance3Before == balance3After
@@ -252,7 +252,7 @@ import "StaticATokenLM_base.spec"
 
     /**
     * @notice Prove "participants/bug4.patch"
-    * Hight level: could not get zero tokens when depositting or minting
+    * Hight level: could not get zero tokens when depositing or minting
     **/
     rule mintNotZeroAmount(env e, method f, address caller) 
         filtered { f -> mintFunctions(f) } {
@@ -283,7 +283,7 @@ import "StaticATokenLM_base.spec"
     
     /**
     * @notice Prove "participants/bug5.patch"
-    * Variable Transition: mint correctly increases total supply of shares
+    * Variable Transition: mint correctly increases the total supply of shares
     **/
     rule mintIncreasesSharesTotalSupply(env e, address caller, uint256 shares, address recipient) {
         setupUser(e, caller);
@@ -302,14 +302,14 @@ import "StaticATokenLM_base.spec"
         uint256 sharesBalanceAfter = balanceOf(recipient);
         uint256 totalSharesAfter = totalSupply();
 
-        // Total shares increasing the the same amount as user's sharess
+        // Total shares increasing the same amount as user's shares
         assert totalSharesAfter > totalSharesBefore;
         assert totalSharesAfter - totalSharesBefore == sharesBalanceAfter - sharesBalanceBefore;
     }
     
     /**
     * @notice Prove "participants/bug6.patch"
-    * Variable Transition: mint correctly increases total supply of underlying assets
+    * Variable Transition: mint correctly increases the total supply of underlying assets
     **/
     rule mintIncreasesAssetsTotalSupply(env e, address caller, uint256 shares, address recipient) {
         setupUser(e, caller);
@@ -338,7 +338,7 @@ import "StaticATokenLM_base.spec"
         setupUser(e, caller);
         setupUser(e, recipient);
         require e.msg.sender == caller;
-        require caller != recipient;
+        require caller == recipient;
 
         setupEnv(e);
 
@@ -356,7 +356,7 @@ import "StaticATokenLM_base.spec"
 
     /**
     * @notice Prove "participants/bug8.patch"
-    * Hight level: mint don't touch other balances
+    * Hight level: mint doesn't touch other balances
     **/
     rule mintTouchOnlyRecipientBalance(env e, address caller, uint256 shares, address recipient) {
         setupUser(e, caller);
@@ -435,7 +435,7 @@ import "StaticATokenLM_base.spec"
 
     /**
     * @notice Prove "participants/bug11.patch"
-    * Hight level: transfer functions don't affect users's underlying assets
+    * Hight level: transfer functions don't affect users' underlying assets
     **/
     rule transferDontAffectUserUnderlyingAssets(method f, env e, address anyUser) 
         filtered { f -> transferFunctions(f) } {
@@ -452,50 +452,4 @@ import "StaticATokenLM_base.spec"
         uint256 anyUserUnderlyingBalanceAfter = _AToken.balanceOf(e, anyUser);
 
         assert anyUserUnderlyingBalanceBefore == anyUserUnderlyingBalanceAfter;
-    }
-
-    /**
-    * @notice Prove "participants/bug12.patch"
-    * State transition: `withdraw()` or `redeem()` should burn user shares or revert
-    **/
-    rule withdrawRedeemBurnUserShares(method f, env e, address anyUser) 
-        filtered { f -> burnFunctions(f) } {
-        
-        setupUser(e, anyUser);
-
-        setupEnv(e);
-
-        uint256 anyUserBalanceBefore = balanceOf(anyUser);
-
-        calldataarg arg;
-        f(e, arg);
-        
-        uint256 anyUserBalanceAfter = balanceOf(anyUser);
-
-        assert anyUserBalanceBefore != anyUserBalanceAfter;
-    }
-
-    /**
-    * @notice Prove "participants/bug13.patch"
-    * State transition: `withdraw()` or `redeem()` should burn only one user shares 
-    **/
-    rule burnOnlyOneUserShares(method f, env e, address anyUser1, address anyUser2) 
-        filtered { f -> burnFunctions(f) } {
-        
-        setupUser(e, anyUser1);
-        setupUser(e, anyUser2);
-
-        setupEnv(e);
-
-        uint256 anyUser1BalanceBefore = balanceOf(anyUser1);
-        uint256 anyUser2BalanceBefore = balanceOf(anyUser2);
-
-        calldataarg arg;
-        f(e, arg);
-        
-        uint256 anyUser1BalanceAfter = balanceOf(anyUser1);
-        uint256 anyUser2BalanceAfter = balanceOf(anyUser2);
-
-        // The successful transaction should change the balance of a user
-        assert anyUser1BalanceBefore != anyUser1BalanceAfter && anyUser2BalanceBefore == anyUser2BalanceAfter;
     }

@@ -21,6 +21,9 @@ import "StaticATokenLM_base.spec"
         convertToAssets(uint256) returns (uint256)
         maxRedeemUnderlying(address) returns (uint256)
         maxDepositUnderlying(address) returns (uint256)
+
+        metaDeposit(address, address, uint256, uint16, bool, uint256, (address, address, uint256, uint256, uint8, bytes32, bytes32), (uint8, bytes32, bytes32)) returns (uint256)
+        metaWithdraw(address, address, uint256, uint256, bool, uint256, (uint8, bytes32, bytes32)) returns (uint256, uint256)
     }
 
 ///////////////// DEFINITIONS //////////////////////
@@ -38,7 +41,7 @@ import "StaticATokenLM_base.spec"
     
     definition metaFunctions(method f) returns bool = (
         f.selector == metaDeposit(address, address, uint256, uint16, bool, uint256, (address, address, uint256, uint256, uint8, bytes32, bytes32), (uint8, bytes32, bytes32)).selector 
-        || f.selector == metaDeposit(address, address, uint256, uint256, bool, uint256, (uint8, bytes32, bytes32)).selector 
+        || f.selector == metaWithdraw(address, address, uint256, uint256, bool, uint256, (uint8, bytes32, bytes32)).selector 
         );
 
     /// @notice `metaDeposit()` is excluded because of the off-chain cryptography

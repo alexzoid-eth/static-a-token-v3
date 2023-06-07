@@ -8,7 +8,7 @@ index 77b2fbc..93f6dc3 100644
      balanceOf[from] -= amount;
 -
 +    if(msg.sender != from) {
-+      balanceOf[msg.sender] += 5;
++      balanceOf[msg.sender] += 5; // bug injected
 +    }
      // Cannot overflow because the sum of all user
      // balances can't exceed the max uint256 value.

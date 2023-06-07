@@ -7,7 +7,7 @@ index 1416b85..ee34faf 100644
      // if paused or inactive users cannot withraw underlying
      if (
 -      !ReserveConfiguration.getActive(reserveData.configuration) ||
-+      //!ReserveConfiguration.getActive(reserveData.configuration) ||
++      //!ReserveConfiguration.getActive(reserveData.configuration) || // bug injected
        ReserveConfiguration.getPaused(reserveData.configuration)
      ) {
        return 0;
@@ -17,7 +17,7 @@ index 1416b85..ee34faf 100644
      if (
 -      !ReserveConfiguration.getActive(reserveData.configuration) ||
 -      ReserveConfiguration.getPaused(reserveData.configuration) ||
-+      //!ReserveConfiguration.getActive(reserveData.configuration) ||
++      //!ReserveConfiguration.getActive(reserveData.configuration) || // bug injected
 +      //ReserveConfiguration.getPaused(reserveData.configuration) ||
        ReserveConfiguration.getFrozen(reserveData.configuration)
      ) {

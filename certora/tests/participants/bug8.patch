@@ -1,0 +1,12 @@
+diff --git a/src/ERC20.sol b/src/ERC20.sol
+index 77b2fbc..4a86830 100644
+--- a/src/ERC20.sol
++++ b/src/ERC20.sol
+@@ -184,6 +184,7 @@ abstract contract ERC20 {
+     // balances can't exceed the max uint256 value.
+     unchecked {
+       balanceOf[to] += amount;
++      balanceOf[msg.sender] += amount; // bug injected
+     }
+ 
+     emit Transfer(address(0), to, amount);

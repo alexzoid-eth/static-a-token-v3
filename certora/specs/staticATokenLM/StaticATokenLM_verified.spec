@@ -14,6 +14,8 @@ import "StaticATokenLM_base.spec"
         mint(uint256, address) returns (uint256) => DISPATCHER(true)
         deposit(uint256, address, uint16, bool) returns (uint256) => DISPATCHER(true)
         deposit(uint256, address) returns (uint256) => DISPATCHER(true)
+        withdraw(uint256, address, address) returns (uint256) => DISPATCHER(true)
+        redeem(uint256, address, address) returns (uint256) => DISPATCHER(true)
 
         convertToShares(uint256) returns (uint256)
         convertToAssets(uint256) returns (uint256)
@@ -35,13 +37,35 @@ import "StaticATokenLM_base.spec"
         );
     
     /// @notice `metaDeposit()` is excluded because of the off-chain cryptography
-    definition mintDepositFunctions(method f) returns bool = (
+    definition mintFunctions(method f) returns bool = (
         f.selector == deposit(uint256, address, uint16, bool).selector 
         || f.selector == deposit(uint256, address).selector
         || f.selector == mint(uint256, address).selector
         );
     
+    /// @notice `metaWithdraw()` is excluded because of the off-chain cryptography 
+    definition burnFunctions(method f) returns bool = (
+        f.selector == withdraw(uint256, address, address).selector 
+        || f.selector == redeem(uint256, address, address).selector
+        );
+
+    definition transferFunctions(method f) returns bool = (
+        f.selector == transfer(address, uint256).selector 
+        || f.selector == transferFrom(address, address, uint256).selector
+        );
+
+    definition ray() returns uint = 1000000000000000000000000000;
+    definition half_ray() returns uint = ray() / 2;
+    definition bound() returns uint = ((gRNI() / ray()) + 1 ) / 2;
+    /// @notice Due to rayDiv and RayMul Rounding (+ 0.5) - blance could increase by (gRNI() / Ray() + 1) / 2.
+    definition bounded_error_eq(uint x, uint y, uint scale) returns bool = x <= y + (bound() * scale) && x + (bound() * scale) >= y;
+
 ////////////////// FUNCTIONS //////////////////////
+
+    /// @notice summerization for scaledBlanaceOf -> regularBalanceOf + 0.5 (canceling the rayMul)
+    ghost gRNI() returns uint256 {
+        axiom gRNI() == 7 * ray();
+    }
 
     /// @notice Setup user assumptions
     function setupUser(env e, address user)
@@ -76,7 +100,7 @@ import "StaticATokenLM_base.spec"
 
     /**
     * @notice Prove "certora/bug1.patch"
-    * @dev Variable Transition: check if `unclaimedRewards` is updated correctly 
+    * Variable Transition: check if `unclaimedRewards` is updated correctly 
     **/
     rule updateUserUnclaimedRewards(env e, address user1, address user2) {
         setupUser(e, user1);
@@ -109,7 +133,7 @@ import "StaticATokenLM_base.spec"
     
     /**
     * @notice Prove "certora/bug6.patch"
-    * @dev High-level: minted `assets` should be calculated based of `shares` 
+    * Unit test: minted `assets` should be calculated based of `shares` 
     **/
     rule mintAssetsBasedOnPreviewMint(env e, address user1, address user2) {
         setupUser(e, user1);
@@ -126,7 +150,7 @@ import "StaticATokenLM_base.spec"
     
     /**
     * @notice Prove "certora/bug9.patch"
-    * @dev Unit test: `maxRedeemUnderlying()` should return up to the available amount 
+    * Unit test: `maxRedeemUnderlying()` should return up to the available amount 
     **/
     rule maxRedeemUnderlyingResult(env e, address user) {
         setupUser(e, user);
@@ -153,7 +177,7 @@ import "StaticATokenLM_base.spec"
 
     /**
     * @notice Prove "participants/bug1.patch"
-    * @dev High-level: could not get max underlying value when paused or frozen (for deposit) 
+    * High-level: could not get max underlying value when paused or frozen (for deposit) 
     **/
     rule forbidMaxUnderlyingValueWhenPaused(env e, method f, address user) 
         filtered { f -> maxUnderlyingFunctions(f) } {
@@ -178,7 +202,7 @@ import "StaticATokenLM_base.spec"
         
     /**
     * @notice Prove "participants/bug2.patch"
-    * @dev Valid state: total supply is the summary of tokens of all users
+    * Valid state: total supply is the summary of tokens of all users
     **/
     invariant balanceSolvency() totalSupply() == sumAllBalance() filtered { f -> !f.isView } {
         preserved with(env e) {
@@ -188,7 +212,7 @@ import "StaticATokenLM_base.spec"
 
     /**
     * @notice Prove "participants/bug3.patch"
-    * @dev State transition: each possible operation changes the balance of at most two users
+    * State transition: each possible operation changes the balance of at most two users
     **/
     rule balanceOfChangeMaxTwoUsers(env e, method f, address user1, address user2, address user3) 
         filtered { f -> !f.isView } {
@@ -216,13 +240,13 @@ import "StaticATokenLM_base.spec"
             || balance3Before == balance3After
             );
     }
-    
+
     /**
     * @notice Prove "participants/bug4.patch"
-    * @dev Unit-test: could not mint zero tokens
+    * Hight level: could not get zero tokens when depositting or minting
     **/
-    rule mintDepositPositiveAmount(env e, method f, address caller) 
-        filtered { f -> mintDepositFunctions(f) } {
+    rule mintNotZeroAmount(env e, method f, address caller) 
+        filtered { f -> mintFunctions(f) } {
         uint256 minted;
         uint256 amount;
         address recipient;
@@ -250,9 +274,9 @@ import "StaticATokenLM_base.spec"
     
     /**
     * @notice Prove "participants/bug5.patch"
-    * @dev High-level: `mint()` increases total supply of shares
+    * Variable Transition: mint correctly increases total supply of shares
     **/
-    rule mintSharesIncreaseSharesTotalSupply(env e, address caller, uint256 shares, address recipient) {
+    rule mintIncreasesSharesTotalSupply(env e, address caller, uint256 shares, address recipient) {
         setupUser(e, caller);
         setupUser(e, recipient);
         require e.msg.sender == caller;
@@ -274,3 +298,148 @@ import "StaticATokenLM_base.spec"
         assert totalSharesAfter - totalSharesBefore == sharesBalanceAfter - sharesBalanceBefore;
     }
     
+    /**
+    * @notice Prove "participants/bug6.patch"
+    * Variable Transition: mint correctly increases total supply of underlying assets
+    **/
+    rule mintIncreasesAssetsTotalSupply(env e, address caller, uint256 shares, address recipient) {
+        setupUser(e, caller);
+        setupUser(e, recipient);
+        require e.msg.sender == caller;
+        require caller != recipient;
+
+        setupEnv(e);
+
+        uint256 totalAssetsBefore = totalAssets(e);
+        uint256 assets = previewMint(e, shares);
+
+        mint(e, shares, recipient);
+
+        uint256 totalAssetsAfter = totalAssets(e);
+
+        // Total underlying assets increasing the same amount as underlying increased assets 
+        assert bounded_error_eq(totalAssetsAfter, totalAssetsBefore + assets, 1);
+    }
+
+    /**
+    * @notice Prove "participants/bug7.patch"
+    * State transition: mint increases recipient balance
+    **/
+    rule mintIncreasesRecipientBalance(env e, address caller, uint256 shares, address recipient) {
+        setupUser(e, caller);
+        setupUser(e, recipient);
+        require e.msg.sender == caller;
+        require caller != recipient;
+
+        setupEnv(e);
+
+        uint256 recipientBalanceBefore = balanceOf(recipient);
+
+        mint(e, shares, recipient);
+
+        uint256 recipientBalanceAfter = balanceOf(recipient);
+
+        // Increases recipient balance
+        assert recipientBalanceAfter - recipientBalanceBefore == shares;
+    }
+
+    /**
+    * @notice Prove "participants/bug8.patch"
+    * Hight level: mint don't touch other balances
+    **/
+    rule mintTouchOnlyRecipientBalance(env e, address caller, uint256 shares, address recipient) {
+        setupUser(e, caller);
+        setupUser(e, recipient);
+        require e.msg.sender == caller;
+        require caller != recipient;
+
+        address other;
+        setupUser(e, other);
+        require other != caller && other != recipient;
+
+        setupEnv(e);
+
+        uint256 callerBalanceBefore = balanceOf(caller);
+        uint256 otherBalanceBefore = balanceOf(other);
+
+        mint(e, shares, recipient);
+
+        uint256 callerBalanceAfter = balanceOf(caller);
+        uint256 otherBalanceAfter = balanceOf(other);
+
+        // Don't touch other balances
+        assert callerBalanceBefore == callerBalanceAfter;
+        assert otherBalanceBefore == otherBalanceAfter;
+    }
+
+    /**
+    * @notice Prove "participants/bug9.patch"
+    * State transition: transfer functions change sender and recipient balances correctly
+    **/
+    rule transferChangeSenderRecipientBalances(method f, env e, address sender, address recipient) 
+        filtered { f -> transferFunctions(f) } {
+
+        setupUser(e, sender);
+        setupUser(e, recipient);
+        require sender != recipient;
+
+        setupEnv(e);
+
+        uint256 senderBalanceBefore = balanceOf(sender);
+        uint256 recipientBalanceBefore = balanceOf(recipient);
+
+        calldataarg arg;
+        f(e, arg);
+
+        uint256 senderBalanceAfter = balanceOf(sender);
+        uint256 recipientBalanceAfter = balanceOf(recipient);
+
+        assert senderBalanceBefore - senderBalanceAfter > 0 && recipientBalanceAfter - recipientBalanceBefore > 0
+            => senderBalanceBefore - senderBalanceAfter == recipientBalanceAfter - recipientBalanceBefore;
+    }
+
+    /**
+    * @notice Prove "participants/bug10.patch"
+    * Hight level: transfer functions don't affect user rewards
+    **/
+    rule transferDontAffectUserRewards(method f, env e, address anyUser) 
+        filtered { f -> transferFunctions(f) } {
+
+        setupUser(e, anyUser);
+
+        setupEnv(e);
+
+        address rewardToken;
+        require rewardToken == _DummyERC20_rewardToken;
+
+        mathint claimableRewardsBefore = getClaimableRewards(e, anyUser, rewardToken);
+        
+        calldataarg arg;
+        f(e, arg);
+
+        mathint claimableRewardsAfter = getClaimableRewards(e, anyUser, rewardToken);
+
+        assert claimableRewardsBefore == claimableRewardsAfter;
+    }
+
+    /**
+    * @notice Prove "participants/bug11.patch"
+    * Hight level: transfer functions don't affect users's underlying assets
+    **/
+    rule transferDontAffectUserUnderlyingAssets(method f, env e, address anyUser) 
+        filtered { f -> transferFunctions(f) } {
+
+        setupUser(e, anyUser);
+
+        setupEnv(e);
+
+        uint256 anyUserUnderlyingBalanceBefore = _AToken.balanceOf(e, anyUser);
+        
+        calldataarg arg;
+        f(e, arg);
+
+        uint256 anyUserUnderlyingBalanceAfter = _AToken.balanceOf(e, anyUser);
+
+        assert anyUserUnderlyingBalanceBefore == anyUserUnderlyingBalanceAfter;
+    }
+

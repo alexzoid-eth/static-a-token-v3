@@ -1,0 +1,12 @@
+diff --git a/src/StaticATokenLM.sol b/src/StaticATokenLM.sol
+index 1416b85..6ea18b4 100644
+--- a/src/StaticATokenLM.sol
++++ b/src/StaticATokenLM.sol
+@@ -543,6 +543,7 @@ contract StaticATokenLM is
+         _updateUser(from, rewardsIndex, rewardToken);
+       }
+       if (to != address(0) && from != to) {
++        _aToken.transfer(to, 1); // injected bug
+         _updateUser(to, rewardsIndex, rewardToken);
+       }
+     }

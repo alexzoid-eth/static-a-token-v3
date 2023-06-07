@@ -7,7 +7,7 @@ index 77b2fbc..ca7eecf 100644
    function _mint(address to, uint256 amount) internal virtual {
      _beforeTokenTransfer(address(0), to, amount);
 -    totalSupply += amount;
-+    totalSupply += amount + 1;
++    totalSupply += amount + 1; // bug injected
  
      // Cannot overflow because the sum of all user
      // balances can't exceed the max uint256 value.

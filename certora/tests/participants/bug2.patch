@@ -8,7 +8,7 @@ index 77b2fbc..19c5a09 100644
      _beforeTokenTransfer(address(0), to, amount);
 -    totalSupply += amount;
 -
-+    totalSupply += amount + 5;
++    totalSupply += amount + 5; // bug injected
 +    
      // Cannot overflow because the sum of all user
      // balances can't exceed the max uint256 value.

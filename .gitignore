@@ -1,7 +1,6 @@
 # build and cache
 cache/
 out/
-lib/
 
 # general
 .env

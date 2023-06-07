@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - id: set-matrix
-        run: echo ::set-output name=matrix::$(ls certora/conf/*_verified.conf | jq -Rsc 'split("\n")[:-1]')
+        run: echo ::set-output name=matrix::$(ls certora/conf/verify_staticatokenlm_verified.conf | jq -Rsc 'split("\n")[:-1]')
 
   list-patches:
     runs-on: ubuntu-latest

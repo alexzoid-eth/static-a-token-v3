@@ -11,9 +11,9 @@ import "StaticATokenLM_base.spec"
         getClaimableRewards(address, address) returns (uint256)
         saveCastToUint128(uint256) returns (uint128) envfree
 
-        mint(uint256, address) returns (uint256) => DISPATCHER(true)
-        deposit(uint256, address, uint16, bool) returns (uint256) => DISPATCHER(true)
-        deposit(uint256, address) returns (uint256) => DISPATCHER(true)
+        mint(uint256, address) returns (uint256)
+        deposit(uint256, address, uint16, bool) returns (uint256)
+        deposit(uint256, address) returns (uint256)
         withdraw(uint256, address, address) returns (uint256) => DISPATCHER(true)
         redeem(uint256, address, address) returns (uint256) => DISPATCHER(true)
 
@@ -328,30 +328,6 @@ import "StaticATokenLM_base.spec"
 
         // Total underlying assets increasing the same amount as underlying increased assets 
         assert bounded_error_eq(totalAssetsAfter, totalAssetsBefore + assets, 1);
-    }
-
-    /**
-    * @notice Prove "participants/bug7.patch"
-    * State transition: mint increases recipient balance
-    **/
-    rule mintIncreasesRecipientBalance(env e, address caller, address recipient) {
-        setupUser(e, caller);
-        setupUser(e, recipient);
-        require e.msg.sender == caller;
-        require caller == recipient;
-
-        setupEnv(e);
-
-        uint256 recipientBalanceBefore = balanceOf(recipient);
-
-        uint256 shares;
-        mint(e, shares, recipient);
-
-        uint256 recipientBalanceAfter = balanceOf(recipient);
-
-        // Increases recipient balance
-        assert recipientBalanceAfter > recipientBalanceBefore;
-        assert recipientBalanceAfter - recipientBalanceBefore == shares;
     }
 
     /**

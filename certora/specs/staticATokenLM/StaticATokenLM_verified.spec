@@ -23,21 +23,18 @@ import "StaticATokenLM_base.spec"
 
 ///////////////// DEFINITIONS //////////////////////
 
-    /// @title protocol is paused
-    /// @notice protocol should have `PAUSED` flag or not have `ACTIVE` flag 
+    /// @notice Protocol is paused, should have `PAUSED` flag or not have `ACTIVE` flag 
     definition isPaused() returns bool = getReserveData_isPaused() || !getReserveData_isActive();
 
-    /// @title protocol is frozen
-    /// @notice protocol should have `FROZEN` flag
+    /// @notice Protocol is frozen, should have `FROZEN` flag
     definition isFrozen() returns bool = getReserveData_isFrozen();
 
-    /// @title `maxRedeemUnderlying()` or `maxDepositUnderlying()`
     definition maxUnderlyingFunctions(method f) returns bool = (
         f.selector == maxRedeemUnderlying(address).selector 
         || f.selector == maxDepositUnderlying(address).selector
         );
     
-    /// @title Mint and deposit functions excluding `metaDeposit()` because of the off-chain cryptography
+    /// @notice `metaDeposit()` is excluded because of the off-chain cryptography
     definition mintDepositFunctions(method f) returns bool = (
         f.selector == deposit(uint256, address, uint16, bool).selector 
         || f.selector == deposit(uint256, address).selector
@@ -46,7 +43,7 @@ import "StaticATokenLM_base.spec"
     
 ////////////////// FUNCTIONS //////////////////////
 
-    /// @title Setup user assumptions
+    /// @notice Setup user assumptions
     function setupUser(env e, address user)
     {
         require user != 0;
@@ -61,8 +58,7 @@ import "StaticATokenLM_base.spec"
         require _TransferStrategy != user;
     }
 
-    /// @title Setup reward token assumptions
-    /// @dev Assume that RewardsController.configureAssets(RewardsDataTypes.RewardsConfigInput[] memory rewardsInput) was called
+    /// @notice Setup reward token assumptions
     function setupEnv(env e)
     {
         require getRewardTokensLength() > 0;
@@ -78,16 +74,10 @@ import "StaticATokenLM_base.spec"
 
 ///////////////// PROPERTIES ///////////////////////
 
-    /// @title Prove participants/bug2.patch
-    /// @notice Valid state: total supply is the summary of tokens of all users
-    invariant balanceSolvency() totalSupply() == sumAllBalance() filtered { f -> !f.isView } {
-        preserved with(env e) {
-            require e.msg.sender != currentContract;
-        }
-    }
-
-    /// @title Prove certora/bug1.patch
-    /// @notice Variable Transition: check if `unclaimedRewards` is updated correctly in `_updateUser()`
+    /**
+    * @notice Prove "certora/bug1.patch"
+    * @dev Variable Transition: check if `unclaimedRewards` is updated correctly 
+    **/
     rule updateUserUnclaimedRewards(env e, address user1, address user2) {
         setupUser(e, user1);
         setupUser(e, user2);
@@ -98,7 +88,7 @@ import "StaticATokenLM_base.spec"
         address rewardToken;
         require rewardToken == _DummyERC20_rewardToken;
 
-        // Updating of `_userRewardsData[user][rewardToken].unclaimedRewards` requires user's balance > 0
+        // Updating of `unclaimedRewards` requires user's balance > 0
         require balanceOf(user1) != 0;
         require balanceOf(user2) != 0;
 
@@ -117,8 +107,10 @@ import "StaticATokenLM_base.spec"
         assert unclaimedRewards2 == claimableRewards2; 
     }
     
-    /// @title Prove certora/bug6.patch
-    /// @notice High-level: minted `assets` should be calculated based of `shares` with `previewMint()`
+    /**
+    * @notice Prove "certora/bug6.patch"
+    * @dev High-level: minted `assets` should be calculated based of `shares` 
+    **/
     rule mintAssetsBasedOnPreviewMint(env e, address user1, address user2) {
         setupUser(e, user1);
         setupUser(e, user2);
@@ -132,8 +124,10 @@ import "StaticATokenLM_base.spec"
         assert assets == previewMint(e, shares);
     }
     
-    /// @title Prove certora/bug9.patch
-    /// @notice Unit test: `maxRedeemUnderlying()` should return up to the available amount
+    /**
+    * @notice Prove "certora/bug9.patch"
+    * @dev Unit test: `maxRedeemUnderlying()` should return up to the available amount 
+    **/
     rule maxRedeemUnderlyingResult(env e, address user) {
         setupUser(e, user);
         setupEnv(e);
@@ -157,8 +151,10 @@ import "StaticATokenLM_base.spec"
             );
     }
 
-    /// @title Prove participants/bug1.patch
-    /// @notice High-level: could not get max underlying value when paused or frozen (for deposit)
+    /**
+    * @notice Prove "participants/bug1.patch"
+    * @dev High-level: could not get max underlying value when paused or frozen (for deposit) 
+    **/
     rule forbidMaxUnderlyingValueWhenPaused(env e, method f, address user) 
         filtered { f -> maxUnderlyingFunctions(f) } {
 
@@ -166,26 +162,34 @@ import "StaticATokenLM_base.spec"
 
         setupUser(e, user);
 
-        // `maxRedeemUnderlying()`: assume the protocol have `PAUSED` flag or not have  `ACTIVE` flag 
+        // `maxRedeemUnderlying()`: the protocol have `PAUSED` flag or not have `ACTIVE` flag 
         if(f.selector == maxRedeemUnderlying(address).selector) {
             require isPaused();
             result = maxRedeemUnderlying(e, user);
         // `maxDepositUnderlying()`: additionally or assume the protocol could have `FROZEN` flag
-        } else if(f.selector == maxDepositUnderlying(address).selector) {
+        } else { // if(f.selector == maxDepositUnderlying(address).selector) {
             require isPaused() || isFrozen();
             result = maxDepositUnderlying(e, user);
-        } else {
-        // TODO: Why the prover goes here? (with f.selector == 3 etc)
-            result = 0;
-            assert true;
-        }
+        } 
 
         // Always return zero when paused
         assert result == 0;
     }
         
-    /// @title Prove participants/bug3.patch
-    /// @notice State transition: сheck that each possible operation changes the balance of at most two users
+    /**
+    * @notice Prove "participants/bug2.patch"
+    * @dev Valid state: total supply is the summary of tokens of all users
+    **/
+    invariant balanceSolvency() totalSupply() == sumAllBalance() filtered { f -> !f.isView } {
+        preserved with(env e) {
+            require e.msg.sender != currentContract;
+        }
+    }
+
+    /**
+    * @notice Prove "participants/bug3.patch"
+    * @dev State transition: each possible operation changes the balance of at most two users
+    **/
     rule balanceOfChangeMaxTwoUsers(env e, method f, address user1, address user2, address user3) 
         filtered { f -> !f.isView } {
 
@@ -213,10 +217,12 @@ import "StaticATokenLM_base.spec"
             );
     }
     
-    /// @title Prove participants/bug4.patch
-    /// @notice Unit-test: could not mint zero tokens
-    /// @dev test `deposit()` and `mint()`, `metaDeposit()` excluded because of the off-chain cryptography
-    rule mintDepositPositiveAmount(env e, method f, address caller) filtered { f -> mintDepositFunctions(f) } {
+    /**
+    * @notice Prove "participants/bug4.patch"
+    * @dev Unit-test: could not mint zero tokens
+    **/
+    rule mintDepositPositiveAmount(env e, method f, address caller) 
+        filtered { f -> mintDepositFunctions(f) } {
         uint256 minted;
         uint256 amount;
         address recipient;
@@ -242,8 +248,10 @@ import "StaticATokenLM_base.spec"
         assert minted == 0 => lastReverted;
     }
     
-    /// @title Prove participants/bug5.patch
-    /// @notice High-level: `mint()` increases total supply of shares 
+    /**
+    * @notice Prove "participants/bug5.patch"
+    * @dev High-level: `mint()` increases total supply of shares
+    **/
     rule mintSharesIncreaseSharesTotalSupply(env e, address caller, uint256 shares, address recipient) {
         setupUser(e, caller);
         setupUser(e, recipient);

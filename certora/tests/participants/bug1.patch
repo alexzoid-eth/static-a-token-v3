@@ -1,0 +1,24 @@
+diff --git a/src/StaticATokenLM.sol b/src/StaticATokenLM.sol
+index 1416b85..ee34faf 100644
+--- a/src/StaticATokenLM.sol
++++ b/src/StaticATokenLM.sol
+@@ -366,7 +366,7 @@ contract StaticATokenLM is
+ 
+     // if paused or inactive users cannot withraw underlying
+     if (
+-      !ReserveConfiguration.getActive(reserveData.configuration) ||
++      //!ReserveConfiguration.getActive(reserveData.configuration) ||
+       ReserveConfiguration.getPaused(reserveData.configuration)
+     ) {
+       return 0;
+@@ -390,8 +390,8 @@ contract StaticATokenLM is
+ 
+     // if inactive, paused or frozen users cannot deposit underlying
+     if (
+-      !ReserveConfiguration.getActive(reserveData.configuration) ||
+-      ReserveConfiguration.getPaused(reserveData.configuration) ||
++      //!ReserveConfiguration.getActive(reserveData.configuration) ||
++      //ReserveConfiguration.getPaused(reserveData.configuration) ||
+       ReserveConfiguration.getFrozen(reserveData.configuration)
+     ) {
+       return 0;

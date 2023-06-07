@@ -1,0 +1,16 @@
+diff --git a/src/StaticATokenLM.sol b/src/StaticATokenLM.sol
+index 1416b85..1a4c196 100644
+--- a/src/StaticATokenLM.sol
++++ b/src/StaticATokenLM.sol
+@@ -470,7 +470,10 @@ contract StaticATokenLM is
+   ) internal returns (uint256) {
+     require(recipient != address(0), StaticATokenErrors.INVALID_RECIPIENT);
+     uint256 shares = previewDeposit(assets);
+-    require(shares != 0, StaticATokenErrors.INVALID_ZERO_AMOUNT);
++    //require(shares != 0, StaticATokenErrors.INVALID_ZERO_AMOUNT);
++    if(shares == 0) {
++      return 0;
++    }
+ 
+     if (fromUnderlying) {
+       address cachedATokenUnderlying = _aTokenUnderlying;

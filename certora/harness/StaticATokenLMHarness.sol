@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.10;
 
-import {StaticATokenLM, StaticATokenErrors,  IPool, IRewardsController, IERC20} from '../../src/StaticATokenLM.sol';
+import {StaticATokenLM, StaticATokenErrors,  IPool, IRewardsController, IERC20, SafeCast} from '../../src/StaticATokenLM.sol';
 import {SymbolicLendingPool} from './pool/SymbolicLendingPool.sol';
 import {DataTypes, ReserveConfiguration} from '../../lib/aave-v3-core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 
-
-
 contract StaticATokenLMHarness is StaticATokenLM{
+
+    using SafeCast for uint256;
 
     address internal _reward_A;
     address internal _reward_B;
@@ -91,5 +91,36 @@ contract StaticATokenLMHarness is StaticATokenLM{
         address cachedATokenUnderlying = _aTokenUnderlying;
         // DataTypes.ReserveData memory reserveData = POOL.getReserveData(cachedATokenUnderlying);
         return POOL.getReserveData(cachedATokenUnderlying).aTokenAddress;
+    }
+    
+    function getReserveData_isActive() public view returns (bool) {
+        address cachedATokenUnderlying = _aTokenUnderlying;
+        return ReserveConfiguration.getActive(
+            DataTypes.ReserveConfigurationMap({
+                data: POOL.getReserveData(cachedATokenUnderlying).configuration.data
+            })
+            );
+    }
+
+    function getReserveData_isPaused() public view returns (bool) {
+        address cachedATokenUnderlying = _aTokenUnderlying;
+        return ReserveConfiguration.getPaused(
+            DataTypes.ReserveConfigurationMap({
+                data: POOL.getReserveData(cachedATokenUnderlying).configuration.data
+            })
+            );
+    }
+
+    function getReserveData_isFrozen() public view returns (bool) {
+        address cachedATokenUnderlying = _aTokenUnderlying;
+        return ReserveConfiguration.getFrozen(
+            DataTypes.ReserveConfigurationMap({
+                data: POOL.getReserveData(cachedATokenUnderlying).configuration.data
+            })
+            );
+    }
+
+    function saveCastToUint128(uint256 value) public pure returns (uint128) {
+        return value.toUint128();
     }
 }

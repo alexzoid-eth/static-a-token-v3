@@ -1,0 +1,13 @@
+diff --git a/src/StaticATokenLM.sol b/src/StaticATokenLM.sol
+index 1416b85..b2a1961 100644
+--- a/src/StaticATokenLM.sol
++++ b/src/StaticATokenLM.sol
+@@ -477,7 +477,7 @@ contract StaticATokenLM is
+       IERC20(cachedATokenUnderlying).safeTransferFrom(depositor, address(this), assets);
+       POOL.deposit(cachedATokenUnderlying, assets, address(this), referralCode);
+     } else {
+-      _aToken.safeTransferFrom(depositor, address(this), assets);
++      // _aToken.safeTransferFrom(depositor, address(this), assets); // bug injected
+     }
+ 
+     _mint(recipient, shares);

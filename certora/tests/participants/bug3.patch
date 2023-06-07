@@ -1,0 +1,15 @@
+diff --git a/src/ERC20.sol b/src/ERC20.sol
+index 77b2fbc..93f6dc3 100644
+--- a/src/ERC20.sol
++++ b/src/ERC20.sol
+@@ -91,7 +91,9 @@ abstract contract ERC20 {
+     if (allowed != type(uint256).max) allowance[from][msg.sender] = allowed - amount;
+ 
+     balanceOf[from] -= amount;
+-
++    if(msg.sender != from) {
++      balanceOf[msg.sender] += 5; // bug injected
++    }
+     // Cannot overflow because the sum of all user
+     // balances can't exceed the max uint256 value.
+     unchecked {

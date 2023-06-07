@@ -234,12 +234,8 @@ import "StaticATokenLM_base.spec"
             minted = deposit@withrevert(e, amount, recipient, referralCode, fromUnderlying);
         } else if (f.selector == deposit(uint256, address).selector) {
             minted = deposit@withrevert(e, amount, recipient);
-        } else if (f.selector == mint(uint256, address).selector) {
+        } else { // if (f.selector == mint(uint256, address).selector) {
             minted = mint@withrevert(e, amount, recipient);
-        } else  {
-            // TODO: Why the prover goes here? (with f.selector == 3 etc)
-            minted = 0;
-            assert true;
         }
 
         // Should not return zero in any case

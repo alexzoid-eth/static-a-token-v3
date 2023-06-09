@@ -15,10 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - id: set-matrix
-        run: echo ::set-output name=matrix::$(ls certora/conf/verify_staticatokenlm_verified.conf | jq -Rsc 'split("\n")[:-1]')
+        run: echo ::set-output name=matrix::'certora/conf/verify_staticatokenlm_verified.conf --rules updateUserUnclaimedRewards mintAssetsBasedOnPreviewMint maxRedeemUnderlyingResult forbidMaxUnderlyingValueWhenPaused balanceSolvency balanceOfChangeMaxTwoUsers mintNotZeroAmount mintIncreasesSharesTotalSupply mintIncreasesAssetsTotalSupply mintTouchOnlyRecipientBalance transferChangeSenderRecipientBalances transferDontAffectUserRewards transferDontAffectUserUnderlyingAssets withdrawRedeemBurnOwnerShares burnOnlyOneUserShares'
 
   list-patches:
-    permissions: write-all
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}

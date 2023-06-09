@@ -8,15 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  list-confs:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v2
-      - id: set-matrix
-        run: echo ::set-output name=matrix::"certora/conf/verify_staticatokenlm_verified.conf --rules updateUserUnclaimedRewards mintAssetsBasedOnPreviewMint maxRedeemUnderlyingResult forbidMaxUnderlyingValueWhenPaused balanceSolvency balanceOfChangeMaxTwoUsers mintNotZeroAmount mintIncreasesSharesTotalSupply mintIncreasesAssetsTotalSupply mintTouchOnlyRecipientBalance transferChangeSenderRecipientBalances transferDontAffectUserRewards transferDontAffectUserUnderlyingAssets withdrawRedeemBurnOwnerShares burnOnlyOneUserShares"
-
   list-patches:
     runs-on: ubuntu-latest
     outputs:
@@ -29,7 +20,6 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     needs: 
-        - list-confs
         - list-patches
     steps:
       - uses: actions/checkout@v2
@@ -58,11 +48,10 @@ jobs:
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc8.10
 
-      - name: Verify rule ${{ matrix.rule }}
+      - name: Verify rule
         run: |	          
           git apply --allow-empty ${{ matrix.patch }}
-          certoraRun ${{ matrix.rule }}
-          
+          certoraRun certora/conf/verify_staticatokenlm_verified.conf --rules updateUserUnclaimedRewards mintAssetsBasedOnPreviewMint maxRedeemUnderlyingResult forbidMaxUnderlyingValueWhenPaused balanceSolvency balanceOfChangeMaxTwoUsers mintNotZeroAmount mintIncreasesSharesTotalSupply mintIncreasesAssetsTotalSupply mintTouchOnlyRecipientBalance transferChangeSenderRecipientBalances transferDontAffectUserRewards transferDontAffectUserUnderlyingAssets withdrawRedeemBurnOwnerShares burnOnlyOneUserShares          
         env:
           CERTORAKEY: ${{ secrets.CERTORAKEY }}
           
@@ -71,4 +60,3 @@ jobs:
       max-parallel: 16
       matrix:
         patch: ${{ fromJson(needs.list-patches.outputs.matrix) }} 
-        rule: ${{ fromJson(needs.list-confs.outputs.matrix) }} 

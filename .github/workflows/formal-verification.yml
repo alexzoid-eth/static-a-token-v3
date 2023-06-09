@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - id: set-matrix
-        run: echo ::set-output name=matrix::'certora/conf/verify_staticatokenlm_verified.conf --rules updateUserUnclaimedRewards mintAssetsBasedOnPreviewMint maxRedeemUnderlyingResult forbidMaxUnderlyingValueWhenPaused balanceSolvency balanceOfChangeMaxTwoUsers mintNotZeroAmount mintIncreasesSharesTotalSupply mintIncreasesAssetsTotalSupply mintTouchOnlyRecipientBalance transferChangeSenderRecipientBalances transferDontAffectUserRewards transferDontAffectUserUnderlyingAssets withdrawRedeemBurnOwnerShares burnOnlyOneUserShares'
+        run: echo ::set-output name=matrix::"certora/conf/verify_staticatokenlm_verified.conf --rules updateUserUnclaimedRewards mintAssetsBasedOnPreviewMint maxRedeemUnderlyingResult forbidMaxUnderlyingValueWhenPaused balanceSolvency balanceOfChangeMaxTwoUsers mintNotZeroAmount mintIncreasesSharesTotalSupply mintIncreasesAssetsTotalSupply mintTouchOnlyRecipientBalance transferChangeSenderRecipientBalances transferDontAffectUserRewards transferDontAffectUserUnderlyingAssets withdrawRedeemBurnOwnerShares burnOnlyOneUserShares"
 
   list-patches:
     runs-on: ubuntu-latest

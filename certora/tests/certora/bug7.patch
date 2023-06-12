@@ -1,0 +1,13 @@
+diff --git a/src/StaticATokenLM.sol b/src/StaticATokenLM.sol
+index 1416b85..6a9e78d 100644
+--- a/src/StaticATokenLM.sol
++++ b/src/StaticATokenLM.sol
+@@ -516,7 +516,7 @@ contract StaticATokenLM is
+       if (allowed != type(uint256).max) allowance[owner][msg.sender] = allowed - shares;
+     }
+ 
+-    _burn(owner, shares);
++    // Manual Mutation, removed: _burn(owner, shares);
+ 
+     emit Withdraw(msg.sender, recipient, owner, amountToWithdraw, shares);
+ 

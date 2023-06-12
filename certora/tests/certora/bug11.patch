@@ -1,0 +1,28 @@
+diff --git a/src/StaticATokenLM.sol b/src/StaticATokenLM.sol
+index 1416b85..e7c7ece 100644
+--- a/src/StaticATokenLM.sol
++++ b/src/StaticATokenLM.sol
+@@ -653,11 +653,21 @@ contract StaticATokenLM is
+       }
+       if (userReward > 0) {
+         _userRewardsData[onBehalfOf][rewards[i]].unclaimedRewards = unclaimedReward.toUint128();
+-        _userRewardsData[onBehalfOf][rewards[i]].rewardsIndexOnLastInteraction = currentRewardsIndex
+-          .toUint128();
+         IERC20(rewards[i]).safeTransfer(receiver, userReward);
+       }
+     }
++
++    // Manual Mutation, placed update of rewardsIndexOnLastInteraction in a separate loop.
++    // This allows to claim the same reward multiple times, by passing `rewards` array that has the same
++    // reward several times.
++    for (uint256 i = 0; i < rewards.length; i++) {
++      if (address(rewards[i]) == address(0)) {
++        continue;
++      }
++      uint256 currentRewardsIndex = getCurrentRewardsIndex(rewards[i]);
++      _userRewardsData[onBehalfOf][rewards[i]].rewardsIndexOnLastInteraction = currentRewardsIndex
++        .toUint128();
++    }
+   }
+ 
+   function _convertToShares(uint256 amount, Rounding rounding) internal view returns (uint256) {

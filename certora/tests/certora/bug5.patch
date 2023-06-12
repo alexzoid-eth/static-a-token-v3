@@ -1,0 +1,15 @@
+diff --git a/src/StaticATokenLM.sol b/src/StaticATokenLM.sol
+index 1416b85..ec7b8ef 100644
+--- a/src/StaticATokenLM.sol
++++ b/src/StaticATokenLM.sol
+@@ -606,8 +606,8 @@ contract StaticATokenLM is
+     UserRewardsData memory currentUserRewardsData = _userRewardsData[user][reward];
+     uint256 assetUnit = 10 ** decimals;
+     return
+-      currentUserRewardsData.unclaimedRewards +
+-      _getPendingRewards(
++      /// BinaryOpMutation of: currentUserRewardsData.unclaimedRewards +
++      currentUserRewardsData.unclaimedRewards * _getPendingRewards(
+         balance,
+         currentUserRewardsData.rewardsIndexOnLastInteraction == 0
+           ? rewardsIndexCache.lastUpdatedIndex

@@ -1,0 +1,14 @@
+diff --git a/src/StaticATokenLM.sol b/src/StaticATokenLM.sol
+index 1416b85..4c1889c 100644
+--- a/src/StaticATokenLM.sol
++++ b/src/StaticATokenLM.sol
+@@ -652,7 +652,8 @@ contract StaticATokenLM is
+         userReward = totalRewardTokenBalance;
+       }
+       if (userReward > 0) {
+-        _userRewardsData[onBehalfOf][rewards[i]].unclaimedRewards = unclaimedReward.toUint128();
++        /// AssignmentMutation of: _userRewardsData[onBehalfOf][rewards[i]].unclaimedRewards = unclaimedReward.toUint128();
++        _userRewardsData[onBehalfOf][rewards[i]].unclaimedRewards = 0;
+         _userRewardsData[onBehalfOf][rewards[i]].rewardsIndexOnLastInteraction = currentRewardsIndex
+           .toUint128();
+         IERC20(rewards[i]).safeTransfer(receiver, userReward);

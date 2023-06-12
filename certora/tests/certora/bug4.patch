@@ -1,0 +1,15 @@
+diff --git a/src/StaticATokenLM.sol b/src/StaticATokenLM.sol
+index 1416b85..394534f 100644
+--- a/src/StaticATokenLM.sol
++++ b/src/StaticATokenLM.sol
+@@ -648,8 +648,9 @@ contract StaticATokenLM is
+       }
+ 
+       if (userReward > totalRewardTokenBalance) {
+-        unclaimedReward = userReward - totalRewardTokenBalance;
++        /// SwapLinesMutation of: unclaimedReward = userReward - totalRewardTokenBalance;
+         userReward = totalRewardTokenBalance;
++        unclaimedReward = userReward - totalRewardTokenBalance;
+       }
+       if (userReward > 0) {
+         _userRewardsData[onBehalfOf][rewards[i]].unclaimedRewards = unclaimedReward.toUint128();

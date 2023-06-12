@@ -1,0 +1,14 @@
+diff --git a/src/StaticATokenLM.sol b/src/StaticATokenLM.sol
+index 1416b85..201516c 100644
+--- a/src/StaticATokenLM.sol
++++ b/src/StaticATokenLM.sol
+@@ -556,7 +556,8 @@ contract StaticATokenLM is
+    */
+   function _updateUser(address user, uint256 currentRewardsIndex, address rewardToken) internal {
+     uint256 balance = balanceOf[user];
+-    if (balance > 0) {
++    /// IfStatementMutation of: if (balance > 0) {
++    if (!(balance > 0)) {
+       _userRewardsData[user][rewardToken].unclaimedRewards = _getClaimableRewards(
+         user,
+         rewardToken,

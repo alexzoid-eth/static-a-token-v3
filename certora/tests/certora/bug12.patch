@@ -1,0 +1,13 @@
+diff --git a/src/ERC20.sol b/src/ERC20.sol
+index 77b2fbc..f0faef2 100644
+--- a/src/ERC20.sol
++++ b/src/ERC20.sol
+@@ -177,7 +177,7 @@ abstract contract ERC20 {
+   ////////////////////////////////////////////////////////////// */
+ 
+   function _mint(address to, uint256 amount) internal virtual {
+-    _beforeTokenTransfer(address(0), to, amount);
++    // Manual Mutation, removed: _beforeTokenTransfer(address(0), to, amount);
+     totalSupply += amount;
+ 
+     // Cannot overflow because the sum of all user

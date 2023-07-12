@@ -1,3 +1,7 @@
+# My specification
+
+https://github.com/z0ld/static-a-token-v3/blob/certora-contest/certora/specs/staticATokenLM/StaticATokenLM_verified.spec
+
 # Aave - StaticAToken Formal Verification Contest
 - Total Prize Pool: $40,000 USDC
   - HM awards: $22,000 USDC

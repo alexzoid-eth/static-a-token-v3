@@ -517,7 +517,7 @@ import "StaticATokenLM_base.spec"
             result = redeem(e, amount, receiver, owner);
         }
 
-        uint256 anyUserAfter = balanceOf(anyUser);
+        uint256 anyUserAfter = balanceOf(anyUser); 
 
         assert anyUserBefore == anyUserAfter;
     }

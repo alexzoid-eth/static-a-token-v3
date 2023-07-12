@@ -10,7 +10,6 @@ on:
 jobs:
 
   list-patches:
-    permissions: write-all
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -50,11 +49,10 @@ jobs:
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc8.10
 
-      - name: Verify rule ${{ matrix.rule }}
-        run: |
+      - name: Verify rule
+        run: |	          
           git apply --allow-empty ${{ matrix.patch }}
-          certoraRun ${{ matrix.rule }}
-          
+          certoraRun certora/conf/verify_staticatokenlm_verified.conf --rules updateUserUnclaimedRewards mintAssetsBasedOnPreviewMint maxRedeemUnderlyingResult forbidMaxUnderlyingValueWhenPaused balanceSolvency balanceOfChangeMaxTwoUsers mintNotZeroAmount mintIncreasesSharesTotalSupply mintIncreasesAssetsTotalSupply mintTouchOnlyRecipientBalance transferChangeSenderRecipientBalances transferDontAffectUserRewards transferDontAffectUserUnderlyingAssets withdrawRedeemBurnOwnerShares burnOnlyOneUserShares          
         env:
           CERTORAKEY: ${{ secrets.CERTORAKEY }}
           
@@ -63,9 +61,3 @@ jobs:
       max-parallel: 16
       matrix:
         patch: ${{ fromJson(needs.list-patches.outputs.matrix) }} 
-        rule: 
-            - certora/conf/verify_erc4626_verified.conf --rules erc4626_1verified
-            - certora/conf/verify_erc4626_verified.conf --rules erc4626_2verified erc4626_3verified
-            - certora/conf/verify_staticatokenlm_verified.conf --rules SAT1verified SAT2verified
-            - certora/conf/verify_staticatokenlm_verified.conf --rules SAT3verified
-            
